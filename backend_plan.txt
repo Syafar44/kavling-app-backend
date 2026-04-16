@@ -1,0 +1,370 @@
+# Planning Pembuatan Sistem Manajemen Kavling Mentaya
+
+> Dokumen ini berisi **2 planning terpisah**: Backend (Golang) dan Frontend (Next.js).
+> Ditulis agar mudah dipahami oleh junior programmer atau model AI yang lebih murah.
+
+---
+
+## Gambaran Umum Sistem
+
+Sistem ini adalah **aplikasi manajemen penjualan kavling tanah** yang mencakup:
+
+- **Master Data**: Data kavling (tanah), marketing (sales), dan customer (pembeli)
+- **Transaksi**: Booking, pembelian cash, pembelian kredit, dan pembayaran cicilan
+- **Keuangan**: Arus kas (pemasukan/pengeluaran), laporan, dan statistik
+- **Notifikasi**: Pengiriman pesan WhatsApp otomatis (kwitansi, tagihan)
+- **Hak Akses**: Login, role-based access (Admin, Marketing, Keuangan)
+
+Kedua project (backend & frontend) akan berkomunikasi lewat **REST API** (JSON).
+
+---
+
+# 🔧 PLANNING A: BACKEND (Golang)
+
+Backend bertanggung jawab menyediakan API, mengolah data, dan berkomunikasi dengan database.
+
+---
+
+## TAHAP 1 — Setup Fondasi Project
+
+**Durasi estimasi**: 3–5 hari
+**Tujuan**: Menyiapkan kerangka project agar siap dikembangkan.
+
+### Apa yang dikerjakan:
+
+**1.1 — Inisialisasi Project Go**
+
+Buat folder project dan jalankan `go mod init`. Pilih framework HTTP seperti **Gin** atau **Echo** (keduanya populer dan mudah dipelajari). Gin direkomendasikan karena dokumentasinya bagus.
+
+```
+kavling-backend/
+├── cmd/
+│   └── server/
+│       └── main.go          ← entry point aplikasi
+├── internal/
+│   ├── config/              ← konfigurasi (database, env)
+│   ├── middleware/           ← auth middleware, CORS, logging
+│   ├── models/              ← struct yang merepresentasikan tabel database
+│   ├── handlers/            ← handler HTTP (menerima request, kirim response)
+│   ├── services/            ← business logic (perhitungan, validasi)
+│   ├── repositories/        ← query database (SELECT, INSERT, UPDATE, DELETE)
+│   └── helpers/             ← fungsi utilitas (format tanggal, generate nomor)
+├── migrations/              ← file SQL untuk membuat/mengubah tabel
+├── go.mod
+├── go.sum
+└── .env
+```
+
+**Kenapa strukturnya begini?**
+- `handlers` = menerima HTTP request dan mengembalikan response (seperti Controller di PHP)
+- `services` = tempat logika bisnis (seperti "hitung tunggakan", "generate nomor pembayaran")
+- `repositories` = khusus query database (jadi kalau mau ganti database, cukup ubah di sini)
+- Pemisahan ini membuat kode lebih mudah di-test dan di-maintain
+
+**1.2 — Setup Database & Migrations**
+
+Buat file migration SQL untuk semua tabel. Gunakan library **golang-migrate** atau **goose** untuk menjalankan migration secara terurut.
+
+Tabel yang perlu dibuat (urut berdasarkan dependensi):
+
+1. `users` — data pengguna sistem
+2. `menu` — daftar menu aplikasi
+3. `hak_akses` — relasi user ↔ menu
+4. `throttle` — pencatatan percobaan login gagal
+5. `aktifitas` — log aktivitas user
+6. `bank` — data rekening bank/kas
+7. `konfigurasi` — pengaturan umum (nama perusahaan, logo, dll)
+8. `konfigurasi_wa` — pengaturan WhatsApp (id_device, no_telp)
+9. `template` — template pesan WhatsApp
+10. `marketing` — data sales/marketing
+11. `customer` — data pembeli
+12. `kavling_peta` — data kavling + koordinat SVG + status
+13. `transaksi_booking` — data booking sementara
+14. `transaksi_kavling` — data transaksi (cash/kredit)
+15. `pembayaran` — catatan pembayaran cicilan
+16. `transaksi` — arus kas (pemasukan/pengeluaran)
+
+**Penting**: Buat tabel yang **tidak punya foreign key dulu** (users, bank, menu), baru tabel yang **bergantung pada tabel lain** (hak_akses bergantung pada users dan menu).
+
+**1.3 — Konfigurasi Environment**
+
+Setup file `.env` untuk menyimpan:
+- Database connection string (host, port, user, password, dbname)
+- JWT secret key (untuk autentikasi)
+- Timezone = `Asia/Makassar` (WITA, UTC+8)
+- Upload path untuk file (KTP, bukti transfer, dll)
+- WhatsApp API URL dan credentials
+
+**1.4 — Setup Middleware**
+
+- **CORS middleware**: Agar frontend Next.js bisa mengakses API
+- **Auth middleware**: Mengecek JWT token di setiap request yang butuh login
+- **Logging middleware**: Mencatat setiap request untuk debugging
+
+---
+
+## TAHAP 2 — Modul Autentikasi & Hak Akses
+
+**Durasi estimasi**: 5–7 hari
+**Tujuan**: User bisa login, sistem bisa membedakan role, dan membatasi akses.
+
+### Apa yang dikerjakan:
+
+**2.1 — Endpoint Login**
+
+```
+POST /api/auth/login
+Body: { "username": "admin", "password": "xxx", "captcha": "abc" }
+Response: { "token": "eyJhb...", "user": { "id": 1, "username": "admin", "is_admin": 1 } }
+```
+
+Alur yang terjadi di backend:
+1. Cek tabel `throttle` — apakah IP + username ini sudah gagal login ≥ 5 kali? Kalau iya, wajib kirim CAPTCHA.
+2. Query tabel `users` berdasarkan username.
+3. Kalau user tidak ditemukan → return error "Username tidak ditemukan".
+4. Kalau user status = "BLOKIR" → return error "Akun diblokir".
+5. Verifikasi password menggunakan bcrypt (`bcrypt.CompareHashAndPassword`).
+6. Kalau salah → tambah counter di `throttle`, return error.
+7. Kalau benar → generate **JWT token** yang berisi: `id`, `username`, `is_admin`, `exp` (waktu kadaluarsa).
+8. Catat di tabel `aktifitas` bahwa user ini login.
+
+**2.2 — Middleware Cek Hak Akses**
+
+Setiap request ke endpoint yang butuh login akan melewati middleware ini:
+1. Ambil JWT token dari header `Authorization: Bearer xxx`.
+2. Decode token, ambil `user_id` dan `is_admin`.
+3. Kalau `is_admin = 1` → lanjut (admin punya akses penuh).
+4. Kalau `is_admin = 0` → query tabel `hak_akses` WHERE `id_user` = user_id AND `id_menu` = menu yang diakses. Kalau `status_hak = 0` → return 403 Forbidden.
+
+**2.3 — Endpoint Manajemen User (khusus Admin)**
+
+```
+GET    /api/users              → list semua user
+POST   /api/users              → tambah user baru
+PUT    /api/users/:id          → edit user
+DELETE /api/users/:id          → hapus user
+GET    /api/users/:id/access   → lihat hak akses user
+PUT    /api/users/:id/access   → update hak akses (array id_menu yang dicentang)
+GET    /api/activity-log       → lihat log aktivitas semua user
+```
+
+---
+
+## TAHAP 3 — Modul Master Data
+
+**Durasi estimasi**: 7–10 hari
+**Tujuan**: CRUD untuk data kavling, marketing, dan customer.
+
+### 3.1 — Kavling (Data Tanah)
+
+**Endpoint:**
+```
+GET    /api/kavling              → list semua kavling (dengan status & warna)
+GET    /api/kavling/:id          → detail satu kavling
+POST   /api/kavling              → tambah kavling manual
+PUT    /api/kavling/:id          → edit data kavling
+DELETE /api/kavling/:id          → hapus kavling (hanya status 0)
+POST   /api/kavling/upload-svg   → upload & parsing file SVG
+```
+
+**Logika parsing SVG** (endpoint `upload-svg`):
+1. Terima file SVG dari request.
+2. Parse XML dari file SVG.
+3. Cari semua tag `<polygon>` → ambil atribut `points` dan `transform`.
+4. Cari semua tag `<path>` → ambil atribut `d` dan `transform`.
+5. Cari tag `<text>` terdekat dari tiap polygon/path → ini jadi kode kavling.
+6. Untuk setiap shape yang ditemukan, buat record baru di tabel `kavling_peta` dengan `status = 0` (Kosong).
+
+**Validasi penting:**
+- Kode kavling harus unik (cek di database sebelum insert).
+- Hapus kavling hanya boleh kalau `status = 0`. Kalau status 1/2/3, tolak dengan pesan "Kavling sudah ada transaksi, tidak bisa dihapus."
+
+### 3.2 — Marketing (Data Sales)
+
+**Endpoint:**
+```
+GET    /api/marketing              → list + jumlah transaksi OPEN & CLOSED
+GET    /api/marketing/:id          → detail marketing
+POST   /api/marketing              → tambah marketing
+PUT    /api/marketing/:id          → edit marketing
+DELETE /api/marketing/:id          → hapus (hanya kalau belum punya transaksi)
+GET    /api/marketing/:id/komisi   → detail komisi per transaksi
+```
+
+**Logika hitung OPEN/CLOSED:**
+- OPEN = transaksi di `transaksi_kavling` yang kavlingnya masih status 1 atau 3 (belum lunas)
+- CLOSED = transaksi yang kavlingnya status 2 (cash/lunas)
+
+### 3.3 — Customer (Data Pembeli)
+
+**Endpoint:**
+```
+GET    /api/customers              → list semua customer
+GET    /api/customers/:id          → detail customer
+POST   /api/customers              → tambah customer + upload KTP/KK
+PUT    /api/customers/:id          → edit customer
+DELETE /api/customers/:id          → hapus customer
+```
+
+**Logika upload file:**
+- File KTP dan KK disimpan di folder `./uploads/lampiran_customer/`.
+- Validasi: tipe file harus gambar (jpg/png), ukuran max sesuai konfigurasi server.
+- Simpan nama file di kolom tabel `customer`.
+
+---
+
+## TAHAP 4 — Modul Transaksi & Booking
+
+**Durasi estimasi**: 10–14 hari
+**Tujuan**: Proses inti jual-beli kavling (booking, cash, kredit).
+
+### 4.1 — Booking
+
+**Endpoint:**
+```
+POST   /api/booking                → buat booking baru
+GET    /api/booking                → list semua booking aktif
+DELETE /api/booking/:id            → batalkan booking
+POST   /api/booking/:id/convert    → konversi booking → cash atau kredit
+```
+
+**Alur `POST /api/booking`:**
+1. Validasi: kavling harus status 0 (Kosong). Kalau bukan 0, tolak.
+2. Simpan ke tabel `transaksi_booking` (id_kavling, id_customer, id_marketing, nominal_booking, tgl_expired, keterangan).
+3. Update `kavling_peta` SET `status = 1` (Booking).
+4. Return response sukses.
+
+**Alur `POST /api/booking/:id/convert`:**
+1. Cek booking masih valid (status kavling = 1).
+2. Terima parameter `jenis` = "cash" atau "kredit".
+3. Kalau cash → simpan ke `transaksi_kavling` dengan `jenis_pembelian = 2`, update kavling `status = 2`.
+4. Kalau kredit → simpan ke `transaksi_kavling` dengan `jenis_pembelian = 3`, hitung cicilan per bulan = (harga_jual - DP) / lama_cicilan, update kavling `status = 3`, set `tgl_jatuh_tempo`.
+
+### 4.2 — Transaksi Cash (Langsung dari Peta)
+
+**Endpoint:**
+```
+POST /api/transaksi/cash
+```
+
+**Alur:**
+1. Validasi kavling status 0.
+2. Generate nomor transaksi otomatis (format: `XXXXX/TRX-KAV/YYYY`).
+3. Simpan ke `transaksi_kavling` (jenis_pembelian = 2, lama_cicilan = 0).
+4. Update kavling status → 2 (CASH).
+
+### 4.3 — Transaksi Kredit (Langsung dari Peta)
+
+**Endpoint:**
+```
+POST /api/transaksi/kredit
+```
+
+**Alur:**
+1. Validasi kavling status 0.
+2. Hitung `cicilan_per_bulan = (harga_jual - DP) / lama_cicilan`.
+3. Simpan ke `transaksi_kavling` (jenis_pembelian = 3).
+4. Update kavling status → 3 (KREDIT).
+5. Set `tgl_jatuh_tempo` di `kavling_peta` (default tanggal 10 bulan berikutnya).
+
+### 4.4 — Pembayaran Cicilan
+
+**Endpoint:**
+```
+GET    /api/pembayaran                   → list kavling kredit + status cicilan
+GET    /api/pembayaran/:id_kavling       → detail pembayaran per kavling
+POST   /api/pembayaran/:id_kavling/bayar → bayar cicilan
+```
+
+**Alur `POST .../bayar`:**
+1. Generate nomor pembayaran: `XXXXX/BYR-KAV/YYYY`.
+2. Simpan ke tabel `pembayaran` (no_pembayaran, id_customer, id_kavling, tanggal, pembayaran_ke, jumlah_bayar, id_bank, bukti_pembayaran).
+3. **Otomatis** simpan ke tabel `transaksi` sebagai pemasukan (jenis = "Pemasukan", kategori = "Bayar Angsuran", nominal = jumlah_bayar).
+4. Upload bukti transfer ke `./uploads/bukti_trx/bayar_angsuran/`.
+
+---
+
+## TAHAP 5 — Modul Keuangan & Laporan
+
+**Durasi estimasi**: 7–10 hari
+**Tujuan**: Arus kas, rekap kredit, dan laporan.
+
+### 5.1 — Arus Kas (Cash Flow)
+
+**Endpoint:**
+```
+GET    /api/keuangan/transaksi          → list transaksi + filter tanggal
+POST   /api/keuangan/transaksi          → tambah transaksi manual
+DELETE /api/keuangan/transaksi/:id      → hapus transaksi
+```
+
+Catatan: Pemasukan dari cicilan masuk **otomatis** saat pembayaran diproses di Tahap 4. Endpoint ini untuk transaksi **manual** (pengeluaran operasional, dll).
+
+### 5.2 — Rekap Kredit (Dashboard Keuangan)
+
+**Endpoint:**
+```
+GET /api/keuangan/rekap-kredit           → rekap semua kavling kredit
+GET /api/keuangan/rekap-kredit/:id       → detail cicilan per kavling
+```
+
+**Logika perhitungan per kavling:**
+1. `bulan_berjalan` = selisih bulan dari `tgl_mulai_cicilan` sampai sekarang.
+   Rumus: `(tahun_sekarang - tahun_mulai) × 12 + (bulan_sekarang - bulan_mulai)`
+2. `jumlah_pembayaran` = COUNT dari tabel `pembayaran` WHERE `id_kavling` = X.
+3. `tunggakan` = `bulan_berjalan - jumlah_pembayaran - 1`. Kalau > 0 = TERLAMBAT.
+4. `nominal_tunggakan` = `tunggakan × cicilan_per_bulan`.
+5. `status_bulan_ini` = cek apakah ada record pembayaran di bulan & tahun ini. Ada = "Sudah Bayar", tidak ada = "Belum Bayar".
+
+### 5.3 — Laporan
+
+**Endpoint:**
+```
+GET /api/laporan/umum?dari=2026-01-01&sampai=2026-04-30
+GET /api/laporan/per-customer?id_customer=5&dari=...&sampai=...
+GET /api/laporan/per-kategori?kategori=Bayar+Angsuran&dari=...&sampai=...
+GET /api/laporan/export-excel?dari=...&sampai=...   → download file .xlsx
+```
+
+---
+
+## TAHAP 6 — Konfigurasi Sistem & Finishing
+
+**Durasi estimasi**: 3–5 hari
+
+### Apa yang dikerjakan:
+
+- **Endpoint konfigurasi umum** (`GET/PUT /api/konfigurasi`): nama perusahaan, alamat, logo, tanda tangan digital, data bank untuk kwitansi.
+- **Generate PDF kwitansi**: Buat service yang menghasilkan file PDF kwitansi dari data pembayaran (gunakan library Go seperti `gofpdf` atau `maroto`).
+- **Export Excel**: Implementasi export laporan ke `.xlsx` (gunakan library `excelize`).
+- **Error handling & logging** yang konsisten di semua endpoint.
+- **Testing**: Tulis unit test untuk setiap service (terutama logika perhitungan cicilan dan tunggakan).
+- **API documentation**: Buat dokumentasi endpoint dengan Swagger/OpenAPI.
+
+---
+
+---
+
+## Tips untuk Junior Programmer
+
+1. **Mulai dari Master Data** — Jangan langsung ke Transaksi. Pastikan CRUD kavling, customer, dan marketing sudah jalan dulu.
+2. **Pahami 4 Status Kavling** — Semua logika transaksi berputar di sekitar status 0, 1, 2, 3. Ini kunci utama.
+3. **Bedakan 2 tabel transaksi** — `transaksi_kavling` = data jual-beli kavling. `transaksi` = arus kas keuangan. Namanya mirip tapi fungsinya beda.
+4. **Timezone WITA** — Semua tanggal harus pakai timezone `Asia/Makassar` (UTC+8). Setting ini di backend (Go) dan juga di frontend saat menampilkan tanggal.
+5. **Test di setiap tahap** — Jangan tunggu semua selesai baru test. Setiap kali satu endpoint atau satu halaman selesai, langsung test.
+6. **Komunikasi API** — Backend dan frontend harus sepakat soal format response. Contoh standar:
+   ```json
+   {
+     "success": true,
+     "message": "Data berhasil disimpan",
+     "data": { ... }
+   }
+   ```
+   Untuk error:
+   ```json
+   {
+     "success": false,
+     "message": "Kavling sudah ada transaksi, tidak bisa dihapus",
+     "errors": { "status": "Kavling harus berstatus Kosong" }
+   }
+   ```

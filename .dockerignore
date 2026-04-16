@@ -1,0 +1,79 @@
+# ============================================================================
+# .DOCKERIGNORE - FILE & FOLDER YANG TIDAK PERLU DI-COPY KE CONTAINER
+# ============================================================================
+#
+# File ini mirip .gitignore, tapi untuk Docker build process.
+# Saat `docker build`, file-file ini TIDAK akan di-copy ke container.
+#
+# Keuntungan:
+#   ✓ Build layer lebih kecil
+#   ✓ Proses build lebih cepat
+#   ✓ Container image lebih ringan
+#
+# ============================================================================
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE & Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+README.md
+*.md
+docs/
+LICENSE
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+*.log
+
+# Test files & coverage
+*_test.go
+*.test
+coverage/
+.coverage
+
+# Build artifacts
+dist/
+bin/
+build/
+
+# Dependency cache
+vendor/
+
+# Environment vars (don't include secrets in image!)
+.env
+.env.local
+.env.*.local
+
+# Go specific
+go.sum.bak
+
+# Optional: Cache directories
+.cache/
+
+# Optional: Deployment files (if any)
+docker-compose.yml
+Dockerfile.dev
+
+# Optional: Sensitive files
+*.pem
+*.key
+*.crt
+secrets/
+config/secrets/
+
+# Optional: Large files
+*.iso
+*.zip
+*.tar.gz

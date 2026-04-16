@@ -1,0 +1,2006 @@
+basePath: /api
+definitions:
+  handlers.arusKasRequest:
+    properties:
+      id_bank:
+        example: 1
+        type: integer
+      jenis:
+        enum:
+        - Pemasukan
+        - Pengeluaran
+        example: Pengeluaran
+        type: string
+      kategori:
+        example: Biaya Operasional
+        type: string
+      keterangan:
+        example: Pembelian ATK
+        type: string
+      nominal:
+        example: 500000
+        type: number
+      tanggal:
+        example: "2026-04-14"
+        type: string
+    required:
+    - jenis
+    - kategori
+    - nominal
+    type: object
+  handlers.bankRequest:
+    properties:
+      is_kas:
+        example: 0
+        type: integer
+      nama_bank:
+        example: BRI
+        type: string
+      nama_rekening:
+        example: PT Kavling Mentaya
+        type: string
+      no_rekening:
+        example: "1234567890"
+        type: string
+    required:
+    - nama_bank
+    - nama_rekening
+    - no_rekening
+    type: object
+  handlers.createDenahRequest:
+    properties:
+      nama:
+        example: Blok A
+        type: string
+      svg_content:
+        example: <svg viewBox='0 0 800 600'>...</svg>
+        type: string
+    required:
+    - nama
+    - svg_content
+    type: object
+  handlers.createUserRequest:
+    properties:
+      is_admin:
+        example: 0
+        type: integer
+      nama:
+        example: John Doe
+        type: string
+      password:
+        example: password123
+        minLength: 6
+        type: string
+      username:
+        example: johndoe
+        type: string
+    required:
+    - nama
+    - password
+    - username
+    type: object
+  handlers.loginRequest:
+    properties:
+      captcha:
+        example: ""
+        type: string
+      password:
+        example: admin123
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handlers.loginResponse:
+    properties:
+      data:
+        properties:
+          token:
+            example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+            type: string
+          user:
+            properties:
+              id:
+                example: 1
+                type: integer
+              is_admin:
+                example: 1
+                type: integer
+              nama:
+                example: Administrator
+                type: string
+              username:
+                example: admin
+                type: string
+            type: object
+        type: object
+      message:
+        example: Login berhasil
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  handlers.marketingRequest:
+    properties:
+      alamat:
+        example: Jl. Contoh No. 1, Sampit
+        type: string
+      email:
+        example: budi@email.com
+        type: string
+      nama:
+        example: Budi Santoso
+        type: string
+      no_telp:
+        example: "08123456789"
+        type: string
+      persentase_komisi:
+        example: 2.5
+        type: number
+      status:
+        example: 1
+        type: integer
+    required:
+    - nama
+    type: object
+  handlers.templateRequest:
+    properties:
+      is_aktif:
+        example: 1
+        type: integer
+      isi:
+        example: Halo {nama_customer}, pembayaran ke-{ke} sebesar Rp {nominal} telah
+          kami terima.
+        type: string
+      nama:
+        example: Kwitansi Pembayaran
+        type: string
+      tipe:
+        example: kwitansi
+        type: string
+    required:
+    - isi
+    - nama
+    - tipe
+    type: object
+  handlers.updateAccessRequest:
+    properties:
+      menu_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        items:
+          type: integer
+        type: array
+    type: object
+  handlers.updateDenahRequest:
+    properties:
+      nama:
+        example: Blok A
+        type: string
+      svg_content:
+        example: <svg viewBox='0 0 800 600'>...</svg>
+        type: string
+    required:
+    - nama
+    type: object
+  handlers.updateKavlingRequest:
+    properties:
+      harga_jual_cash:
+        example: 157500000
+        type: number
+      harga_per_meter:
+        example: 2500000
+        type: number
+      lebar_belakang:
+        example: 6
+        type: number
+      lebar_depan:
+        example: 6
+        type: number
+      luas_tanah:
+        example: 63
+        type: number
+      panjang_kanan:
+        example: 10.5
+        type: number
+      panjang_kiri:
+        example: 10.5
+        type: number
+      status:
+        example: 0
+        type: integer
+    type: object
+  handlers.updateUserRequest:
+    properties:
+      is_admin:
+        example: 0
+        type: integer
+      nama:
+        example: John Doe
+        type: string
+      password:
+        example: newpassword
+        type: string
+      status:
+        enum:
+        - AKTIF
+        - BLOKIR
+        example: AKTIF
+        type: string
+    type: object
+  handlers.waRequest:
+    properties:
+      api_key:
+        example: secret-key
+        type: string
+      api_url:
+        example: https://wa.api.example.com
+        type: string
+      id_device:
+        example: device-001
+        type: string
+      no_telp:
+        example: "628123456789"
+        type: string
+    required:
+    - api_url
+    - id_device
+    - no_telp
+    type: object
+  services.BookingInput:
+    properties:
+      id_customer:
+        type: integer
+      id_kavling:
+        type: integer
+      id_marketing:
+        type: integer
+      id_user:
+        type: integer
+      keterangan:
+        type: string
+      nominal_booking:
+        type: number
+      tgl_expired:
+        type: string
+    required:
+    - id_customer
+    - id_kavling
+    type: object
+  services.CashInput:
+    properties:
+      harga_jual:
+        type: number
+      id_customer:
+        type: integer
+      id_kavling:
+        type: integer
+      id_marketing:
+        type: integer
+      id_user:
+        type: integer
+      keterangan:
+        type: string
+    required:
+    - harga_jual
+    - id_customer
+    - id_kavling
+    type: object
+  services.ConvertInput:
+    properties:
+      harga_jual:
+        type: number
+      id_user:
+        type: integer
+      jenis:
+        description: cash | kredit
+        type: string
+      keterangan:
+        type: string
+      lama_cicilan:
+        type: integer
+      tgl_mulai_cicilan:
+        type: string
+      uang_muka:
+        type: number
+    required:
+    - harga_jual
+    - jenis
+    type: object
+  services.KreditInput:
+    properties:
+      harga_jual:
+        type: number
+      id_customer:
+        type: integer
+      id_kavling:
+        type: integer
+      id_marketing:
+        type: integer
+      id_user:
+        type: integer
+      keterangan:
+        type: string
+      lama_cicilan:
+        minimum: 1
+        type: integer
+      tgl_mulai_cicilan:
+        type: string
+      uang_muka:
+        type: number
+    required:
+    - harga_jual
+    - id_customer
+    - id_kavling
+    - lama_cicilan
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: admin@kavling-mentaya.com
+    name: API Support
+  description: REST API backend untuk sistem manajemen penjualan kavling tanah. Semua
+    endpoint (kecuali /auth/login) memerlukan Bearer Token JWT di header Authorization.
+  license:
+    name: MIT
+  termsOfService: http://swagger.io/terms/
+  title: Kavling Mentaya API
+  version: "1.0"
+paths:
+  /activity-log:
+    get:
+      description: Mengambil log aktivitas semua user (admin only)
+      parameters:
+      - description: 'Jumlah record (default: 100)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Log aktivitas user
+      tags:
+      - Users
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentikasi user dan mendapatkan JWT token. Setelah 5x gagal login,
+        sistem meminta captcha.
+      parameters:
+      - description: Kredensial login
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.loginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      summary: Login user
+      tags:
+      - Auth
+  /bank:
+    get:
+      description: Mengambil daftar semua rekening bank dan kas yang aktif
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List rekening bank/kas
+      tags:
+      - Bank
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan rekening bank atau kas tunai baru
+      parameters:
+      - description: Data bank
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.bankRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah rekening bank/kas
+      tags:
+      - Bank
+  /bank/{id}:
+    delete:
+      description: Menghapus rekening bank berdasarkan ID
+      parameters:
+      - description: Bank ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus rekening bank/kas
+      tags:
+      - Bank
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data rekening bank berdasarkan ID
+      parameters:
+      - description: Bank ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update bank
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.bankRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update rekening bank/kas
+      tags:
+      - Bank
+  /booking:
+    get:
+      description: Mengambil daftar semua booking yang masih aktif (status=1)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List booking aktif
+      tags:
+      - Booking
+    post:
+      consumes:
+      - application/json
+      description: Membuat booking kavling. Kavling harus berstatus Kosong (0). Status
+        kavling berubah menjadi Booking (1).
+      parameters:
+      - description: Data booking
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/services.BookingInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Buat booking baru
+      tags:
+      - Booking
+  /booking/{id}:
+    delete:
+      description: Membatalkan booking aktif. Status kavling dikembalikan ke Kosong
+        (0).
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Batalkan booking
+      tags:
+      - Booking
+  /booking/{id}/convert:
+    post:
+      consumes:
+      - application/json
+      description: Mengubah booking menjadi transaksi cash atau kredit. Jika kredit,
+        cicilan per bulan otomatis dihitung = (harga_jual - uang_muka) / lama_cicilan.
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Data konversi (jenis: cash|kredit)'
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/services.ConvertInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Konversi booking ke transaksi
+      tags:
+      - Booking
+  /customers:
+    get:
+      description: Mengambil daftar semua customer (pembeli)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List customer
+      tags:
+      - Customer
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membuat data customer baru. Mendukung upload file foto KTP dan
+        KK (multipart/form-data).
+      parameters:
+      - description: Nama lengkap
+        in: formData
+        name: nama
+        required: true
+        type: string
+      - description: No. telepon
+        in: formData
+        name: no_telp
+        type: string
+      - description: Nomor KTP
+        in: formData
+        name: no_ktp
+        type: string
+      - description: Alamat
+        in: formData
+        name: alamat
+        type: string
+      - description: Pekerjaan
+        in: formData
+        name: pekerjaan
+        type: string
+      - description: Foto KTP (jpg/png)
+        in: formData
+        name: foto_ktp
+        type: file
+      - description: Foto KK (jpg/png)
+        in: formData
+        name: foto_kk
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah customer
+      tags:
+      - Customer
+  /customers/{id}:
+    delete:
+      description: Menghapus customer berdasarkan ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus customer
+      tags:
+      - Customer
+    get:
+      description: Mengambil detail satu customer berdasarkan ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Detail customer
+      tags:
+      - Customer
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengubah data customer. Mendukung re-upload foto KTP/KK.
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nama lengkap
+        in: formData
+        name: nama
+        type: string
+      - description: No. telepon
+        in: formData
+        name: no_telp
+        type: string
+      - description: Nomor KTP
+        in: formData
+        name: no_ktp
+        type: string
+      - description: Alamat
+        in: formData
+        name: alamat
+        type: string
+      - description: Pekerjaan
+        in: formData
+        name: pekerjaan
+        type: string
+      - description: Foto KTP baru
+        in: formData
+        name: foto_ktp
+        type: file
+      - description: Foto KK baru
+        in: formData
+        name: foto_kk
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update customer
+      tags:
+      - Customer
+  /denah-kavling:
+    get:
+      description: Mengambil daftar semua denah kavling beserta ringkasan jumlah kavling
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List semua denah kavling
+      tags:
+      - Denah Kavling
+    post:
+      consumes:
+      - application/json
+      description: Menerima nama dan kode SVG. Sistem mem-parse SVG, mengekstrak semua
+        <path id="..."> sebagai kavling, lalu menyimpan denah beserta kavling-kavlingnya
+        secara otomatis.
+      parameters:
+      - description: Data denah kavling
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createDenahRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Buat denah kavling baru dari SVG
+      tags:
+      - Denah Kavling
+  /denah-kavling/{id}:
+    delete:
+      description: Menghapus denah beserta semua kavling di dalamnya. Gagal jika ada
+        kavling dengan transaksi aktif.
+      parameters:
+      - description: Denah ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Ada transaksi aktif
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus denah kavling
+      tags:
+      - Denah Kavling
+    get:
+      description: Mengambil detail satu denah kavling beserta seluruh kavling di
+        dalamnya
+      parameters:
+      - description: Denah ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Detail denah kavling
+      tags:
+      - Denah Kavling
+    put:
+      consumes:
+      - application/json
+      description: Mengubah nama dan/atau SVG content denah. Jika svg_content diisi,
+        viewbox akan diperbarui. Kavling yang sudah ada tidak diubah.
+      parameters:
+      - description: Denah ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update denah
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateDenahRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update denah kavling
+      tags:
+      - Denah Kavling
+  /kavling:
+    get:
+      description: Mengambil daftar kavling. Bisa difilter berdasarkan denah_kavling_id.
+      parameters:
+      - description: Filter berdasarkan denah kavling ID
+        in: query
+        name: denah_kavling_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List kavling
+      tags:
+      - Kavling
+  /kavling/{id}:
+    delete:
+      description: Menghapus kavling. Hanya kavling dengan status Kosong (0) yang
+        bisa dihapus.
+      parameters:
+      - description: Kavling ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Kavling sudah ada transaksi
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus kavling
+      tags:
+      - Kavling
+    get:
+      description: Mengambil detail satu kavling berdasarkan ID
+      parameters:
+      - description: Kavling ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Detail kavling
+      tags:
+      - Kavling
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data dimensi, harga, dan status kavling. kode_kavling
+        dan kode_map bersifat immutable (tidak bisa diubah).
+      parameters:
+      - description: Kavling ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update kavling
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateKavlingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update kavling
+      tags:
+      - Kavling
+  /keuangan/rekap-kredit:
+    get:
+      description: 'Menghitung rekap cicilan semua kavling kredit: bulan berjalan,
+        jumlah pembayaran, tunggakan, nominal tunggakan, dan status bulan ini.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Rekap kredit semua kavling
+      tags:
+      - Keuangan
+  /keuangan/statistik:
+    get:
+      description: Mengambil rekap pemasukan dan pengeluaran per bulan untuk tahun
+        tertentu
+      parameters:
+      - description: 'Tahun (default: tahun sekarang)'
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Statistik arus kas per bulan
+      tags:
+      - Keuangan
+  /keuangan/transaksi:
+    get:
+      description: Mengambil daftar transaksi arus kas dengan filter tanggal. Response
+        juga mencakup total pemasukan, pengeluaran, dan saldo.
+      parameters:
+      - description: Dari tanggal (YYYY-MM-DD)
+        in: query
+        name: dari
+        type: string
+      - description: Sampai tanggal (YYYY-MM-DD)
+        in: query
+        name: sampai
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List arus kas
+      tags:
+      - Keuangan
+    post:
+      consumes:
+      - application/json
+      description: Mencatat pemasukan atau pengeluaran secara manual (bukan dari cicilan).
+        Saldo bank otomatis diupdate.
+      parameters:
+      - description: Data transaksi
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.arusKasRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah transaksi arus kas manual
+      tags:
+      - Keuangan
+  /keuangan/transaksi/{id}:
+    delete:
+      description: Menghapus transaksi arus kas manual. Saldo bank otomatis dikembalikan.
+      parameters:
+      - description: Transaksi ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus transaksi arus kas
+      tags:
+      - Keuangan
+  /konfigurasi:
+    get:
+      description: Mengambil data konfigurasi umum sistem (nama perusahaan, alamat,
+        logo, tanda tangan, dll)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Ambil konfigurasi sistem
+      tags:
+      - Konfigurasi
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengubah data konfigurasi umum. Mendukung upload logo dan tanda
+        tangan digital (multipart/form-data).
+      parameters:
+      - description: Nama perusahaan
+        in: formData
+        name: nama_perusahaan
+        type: string
+      - description: Alamat
+        in: formData
+        name: alamat
+        type: string
+      - description: Telepon
+        in: formData
+        name: telepon
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        type: string
+      - description: Website
+        in: formData
+        name: website
+        type: string
+      - description: Nama penanda tangan
+        in: formData
+        name: nama_ttd
+        type: string
+      - description: Jabatan penanda tangan
+        in: formData
+        name: jabatan_ttd
+        type: string
+      - description: File logo perusahaan
+        in: formData
+        name: logo
+        type: file
+      - description: File tanda tangan digital
+        in: formData
+        name: ttd_digital
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update konfigurasi sistem
+      tags:
+      - Konfigurasi
+  /konfigurasi/template:
+    get:
+      description: Mengambil daftar semua template pesan WhatsApp
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List template pesan WhatsApp
+      tags:
+      - Konfigurasi
+    post:
+      consumes:
+      - application/json
+      description: Membuat template pesan WhatsApp baru. Variabel template menggunakan
+        format {nama_variabel}.
+      parameters:
+      - description: Data template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.templateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah template pesan WhatsApp
+      tags:
+      - Konfigurasi
+  /konfigurasi/template/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Mengubah template pesan WhatsApp berdasarkan ID
+      parameters:
+      - description: Template ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.templateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update template pesan WhatsApp
+      tags:
+      - Konfigurasi
+  /konfigurasi/wa:
+    get:
+      description: Mengambil konfigurasi gateway WhatsApp yang aktif
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Ambil konfigurasi WhatsApp
+      tags:
+      - Konfigurasi
+    put:
+      consumes:
+      - application/json
+      description: Mengubah atau membuat konfigurasi gateway WhatsApp
+      parameters:
+      - description: Konfigurasi WhatsApp
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.waRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update konfigurasi WhatsApp
+      tags:
+      - Konfigurasi
+  /laporan/export-excel:
+    get:
+      description: Mengunduh laporan arus kas dalam format .xlsx dengan filter rentang
+        tanggal
+      parameters:
+      - description: Dari tanggal (YYYY-MM-DD)
+        in: query
+        name: dari
+        type: string
+      - description: Sampai tanggal (YYYY-MM-DD)
+        in: query
+        name: sampai
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: Export laporan arus kas ke Excel
+      tags:
+      - Laporan
+  /laporan/export-excel-pembayaran:
+    get:
+      description: Mengunduh laporan riwayat pembayaran cicilan dalam format .xlsx
+      parameters:
+      - description: Dari tanggal (YYYY-MM-DD)
+        in: query
+        name: dari
+        type: string
+      - description: Sampai tanggal (YYYY-MM-DD)
+        in: query
+        name: sampai
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: Export laporan pembayaran cicilan ke Excel
+      tags:
+      - Laporan
+  /laporan/per-customer:
+    get:
+      description: Mengambil riwayat pembayaran/transaksi untuk customer tertentu
+        dalam rentang tanggal
+      parameters:
+      - description: Customer ID
+        in: query
+        name: id_customer
+        required: true
+        type: integer
+      - description: Dari tanggal (YYYY-MM-DD)
+        in: query
+        name: dari
+        type: string
+      - description: Sampai tanggal (YYYY-MM-DD)
+        in: query
+        name: sampai
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Laporan per customer
+      tags:
+      - Laporan
+  /laporan/per-kategori:
+    get:
+      description: Mengambil transaksi arus kas berdasarkan kategori tertentu dalam
+        rentang tanggal
+      parameters:
+      - description: 'Nama kategori (contoh: Bayar Angsuran)'
+        in: query
+        name: kategori
+        required: true
+        type: string
+      - description: Dari tanggal (YYYY-MM-DD)
+        in: query
+        name: dari
+        type: string
+      - description: Sampai tanggal (YYYY-MM-DD)
+        in: query
+        name: sampai
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Laporan per kategori
+      tags:
+      - Laporan
+  /laporan/umum:
+    get:
+      description: Mengambil laporan arus kas dengan filter rentang tanggal beserta
+        total pemasukan, pengeluaran, dan saldo
+      parameters:
+      - description: Dari tanggal (YYYY-MM-DD)
+        in: query
+        name: dari
+        type: string
+      - description: Sampai tanggal (YYYY-MM-DD)
+        in: query
+        name: sampai
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Laporan arus kas umum
+      tags:
+      - Laporan
+  /marketing:
+    get:
+      description: Mengambil daftar semua marketing beserta jumlah transaksi OPEN
+        dan CLOSED
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List marketing
+      tags:
+      - Marketing
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data marketing (sales) baru
+      parameters:
+      - description: Data marketing
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.marketingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah marketing
+      tags:
+      - Marketing
+  /marketing/{id}:
+    delete:
+      description: Menghapus marketing. Ditolak jika marketing sudah memiliki transaksi.
+      parameters:
+      - description: Marketing ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Sudah ada transaksi
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus marketing
+      tags:
+      - Marketing
+    get:
+      description: Mengambil detail satu marketing beserta jumlah transaksi OPEN dan
+        CLOSED
+      parameters:
+      - description: Marketing ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Detail marketing
+      tags:
+      - Marketing
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data marketing berdasarkan ID
+      parameters:
+      - description: Marketing ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update marketing
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.marketingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update marketing
+      tags:
+      - Marketing
+  /menu:
+    get:
+      description: Mengambil daftar semua menu aplikasi
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List menu aplikasi
+      tags:
+      - Users
+  /pembayaran:
+    get:
+      description: Mengambil semua record pembayaran cicilan beserta info kavling
+        dan customer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List semua pembayaran cicilan
+      tags:
+      - Pembayaran
+  /pembayaran/{id_kavling}:
+    get:
+      description: Mengambil riwayat pembayaran cicilan untuk kavling tertentu beserta
+        data transaksinya
+      parameters:
+      - description: Kavling ID
+        in: path
+        name: id_kavling
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Detail pembayaran per kavling
+      tags:
+      - Pembayaran
+  /pembayaran/{id_kavling}/bayar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Mencatat pembayaran cicilan untuk kavling kredit. Otomatis mencatat
+        ke arus kas. Jika sudah mencapai lama_cicilan, status kavling berubah menjadi
+        CASH/Lunas.
+      parameters:
+      - description: Kavling ID
+        in: path
+        name: id_kavling
+        required: true
+        type: integer
+      - description: Jumlah pembayaran
+        in: formData
+        name: jumlah_bayar
+        required: true
+        type: number
+      - description: ID rekening bank tujuan
+        in: formData
+        name: id_bank
+        type: integer
+      - description: 'Tanggal bayar (YYYY-MM-DD, default: hari ini)'
+        in: formData
+        name: tanggal
+        type: string
+      - description: Keterangan
+        in: formData
+        name: keterangan
+        type: string
+      - description: Bukti transfer (gambar)
+        in: formData
+        name: bukti_pembayaran
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bayar cicilan
+      tags:
+      - Pembayaran
+  /transaksi:
+    get:
+      description: Mengambil daftar semua transaksi jual-beli kavling (cash dan kredit)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List semua transaksi kavling
+      tags:
+      - Transaksi Kavling
+  /transaksi/{id}:
+    get:
+      description: Mengambil detail satu transaksi kavling berdasarkan ID
+      parameters:
+      - description: Transaksi ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Detail transaksi kavling
+      tags:
+      - Transaksi Kavling
+  /transaksi/cash:
+    post:
+      consumes:
+      - application/json
+      description: Membuat transaksi pembelian cash langsung dari peta kavling (tanpa
+        booking). Kavling harus berstatus Kosong (0).
+      parameters:
+      - description: Data transaksi cash
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/services.CashInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Transaksi cash langsung
+      tags:
+      - Transaksi Kavling
+  /transaksi/kredit:
+    post:
+      consumes:
+      - application/json
+      description: Membuat transaksi pembelian kredit langsung dari peta kavling.
+        Cicilan per bulan = (harga_jual - uang_muka) / lama_cicilan. Tgl jatuh tempo
+        default tanggal 10 bulan berikutnya.
+      parameters:
+      - description: Data transaksi kredit
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/services.KreditInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Transaksi kredit langsung
+      tags:
+      - Transaksi Kavling
+  /users:
+    get:
+      description: Mengambil daftar semua user (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List semua user
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Membuat user baru (admin only)
+      parameters:
+      - description: Data user baru
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah user baru
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      description: Menghapus user berdasarkan ID (admin only, tidak bisa hapus diri
+        sendiri)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus user
+      tags:
+      - Users
+    get:
+      description: Mengambil detail satu user berdasarkan ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Detail user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update user
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - Users
+  /users/{id}/access:
+    get:
+      description: Mengambil daftar hak akses menu untuk user tertentu
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hak akses user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Mengganti seluruh hak akses menu untuk user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Array id_menu yang dicentang
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateAccessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update hak akses user
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    description: 'Masukkan token JWT dengan format: Bearer {token}. Token diperoleh
+      dari endpoint POST /api/auth/login.'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
