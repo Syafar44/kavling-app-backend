@@ -1356,6 +1356,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/konfigurasi/reset": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus data berdasarkan kategori yang dipilih. Jika items kosong, semua data direset.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Konfigurasi"
+                ],
+                "summary": "Reset data terpilih",
+                "parameters": [
+                    {
+                        "description": "Kategori yang akan direset",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.resetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "/konfigurasi/template": {
             "get": {
                 "security": [
@@ -2144,7 +2188,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Mengambil daftar semua transaksi jual-beli kavling (cash dan kredit)",
+                "description": "Mengambil daftar semua transaksi jual-beli kavling. Gunakan query ?jenis=kredit untuk filter kredit saja.",
                 "produces": [
                     "application/json"
                 ],
@@ -2152,6 +2196,14 @@ const docTemplate = `{
                     "Transaksi Kavling"
                 ],
                 "summary": "List semua transaksi kavling",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter jenis: kredit",
+                        "name": "jenis",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2787,6 +2839,18 @@ const docTemplate = `{
                 "status": {
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "handlers.resetRequest": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "pembayaran, transaksi, keuangan, kavling, customer, marketing",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

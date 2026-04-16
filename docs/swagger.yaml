@@ -147,6 +147,14 @@ definitions:
     required:
     - nama
     type: object
+  handlers.resetRequest:
+    properties:
+      items:
+        description: pembayaran, transaksi, keuangan, kavling, customer, marketing
+        items:
+          type: string
+        type: array
+    type: object
   handlers.templateRequest:
     properties:
       is_aktif:
@@ -1212,6 +1220,34 @@ paths:
       summary: Update konfigurasi sistem
       tags:
       - Konfigurasi
+  /konfigurasi/reset:
+    post:
+      consumes:
+      - application/json
+      description: Menghapus data berdasarkan kategori yang dipilih. Jika items kosong,
+        semua data direset.
+      parameters:
+      - description: Kategori yang akan direset
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handlers.resetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Reset data terpilih
+      tags:
+      - Konfigurasi
   /konfigurasi/template:
     get:
       description: Mengambil daftar semua template pesan WhatsApp
@@ -1714,7 +1750,13 @@ paths:
       - Pembayaran
   /transaksi:
     get:
-      description: Mengambil daftar semua transaksi jual-beli kavling (cash dan kredit)
+      description: Mengambil daftar semua transaksi jual-beli kavling. Gunakan query
+        ?jenis=kredit untuk filter kredit saja.
+      parameters:
+      - description: 'Filter jenis: kredit'
+        in: query
+        name: jenis
+        type: string
       produces:
       - application/json
       responses:
