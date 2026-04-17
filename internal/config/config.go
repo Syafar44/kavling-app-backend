@@ -74,10 +74,15 @@ func ConnectDB() *gorm.DB {
 		AppConfig.Timezone,
 	)
 
+	loc, err := time.LoadLocation(AppConfig.Timezone)
+	if err != nil {
+		log.Printf("Warning: timezone %s tidak dikenal, fallback ke UTC", AppConfig.Timezone)
+		loc = time.UTC
+	}
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 		NowFunc: func() time.Time {
-			loc, _ := time.LoadLocation(AppConfig.Timezone)
 			return time.Now().In(loc)
 		},
 	})

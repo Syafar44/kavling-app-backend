@@ -24,8 +24,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server/main.go
 # ============ STAGE 2: RUNTIME ============
 FROM alpine:latest
 
-# Install ca-certificates for HTTPS
-RUN apk --no-cache add ca-certificates curl
+# Install ca-certificates (HTTPS), curl (healthcheck), tzdata (Asia/Makassar)
+RUN apk --no-cache add ca-certificates curl tzdata
+
+ENV TZ=Asia/Makassar
 
 WORKDIR /app
 

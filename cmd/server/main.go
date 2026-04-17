@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	_ "time/tzdata" // embed IANA tzdata ke binary (Alpine runtime tidak punya /usr/share/zoneinfo)
 
 	_ "backend-kavling/docs"
 	"backend-kavling/internal/config"
