@@ -23,7 +23,7 @@ import (
 	"time"
 	_ "time/tzdata" // embed IANA tzdata ke binary (Alpine runtime tidak punya /usr/share/zoneinfo)
 
-	_ "backend-kavling/docs"
+	"backend-kavling/docs"
 	"backend-kavling/internal/config"
 	"backend-kavling/internal/handlers"
 	"backend-kavling/internal/middleware"
@@ -102,7 +102,16 @@ func main() {
 		})
 	})
 
-	// Swagger UI — akses di http://localhost:8080/swagger/index.html
+	// Swagger config — host & scheme dinamis supaya bisa dipakai di lokal & Railway.
+	// Kosongkan Host → Swagger UI pakai window.location.host (auto-detect).
+	// SWAGGER_HOST env bisa override untuk kasus proxy/custom domain.
+	docs.SwaggerInfo.Host = os.Getenv("SWAGGER_HOST")
+	docs.SwaggerInfo.Schemes = []string{"https", "http"}
+
+	// Swagger UI — akses di:
+	//   http://localhost:8080/swagger/index.html                        (lokal)
+	//   https://<your-app>.up.railway.app/swagger/index.html            (Railway)
+	// Endpoint "Try it out" akan otomatis hit host tempat Swagger dibuka.
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 8. Define routes
