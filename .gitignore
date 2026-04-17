@@ -1,8 +1,9 @@
 .env
-.env.local
+.env.*
 *.exe
-*.log
+server
 uploads/
-dist/
-bin/
-.DS_Store
+*.log
+docs/docs.go
+docs/swagger.json
+docs/swagger.yaml

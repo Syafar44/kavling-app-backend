@@ -17,8 +17,10 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	_ "backend-kavling/docs"
 	"backend-kavling/internal/config"
@@ -90,6 +92,14 @@ func main() {
 
 	// Serve static files (upload)
 	r.Static("/uploads", config.AppConfig.UploadPath)
+
+	// Health check endpoint (untuk Docker HEALTHCHECK & Railway)
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+			"time":   time.Now().Format(time.RFC3339),
+		})
+	})
 
 	// Swagger UI — akses di http://localhost:8080/swagger/index.html
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
