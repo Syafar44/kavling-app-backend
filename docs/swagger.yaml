@@ -30,22 +30,16 @@ definitions:
     type: object
   handlers.bankRequest:
     properties:
+      atas_nama:
+        type: string
       is_kas:
-        example: 0
         type: integer
       nama_bank:
-        example: BRI
-        type: string
-      nama_rekening:
-        example: PT Kavling Mentaya
         type: string
       no_rekening:
-        example: "1234567890"
         type: string
     required:
     - nama_bank
-    - nama_rekening
-    - no_rekening
     type: object
   handlers.createDenahRequest:
     properties:
@@ -61,21 +55,29 @@ definitions:
     type: object
   handlers.createUserRequest:
     properties:
+      email:
+        example: john@example.com
+        type: string
       is_admin:
         example: 0
         type: integer
       nama:
         example: John Doe
         type: string
+      nama_lengkap:
+        example: John Doe
+        type: string
       password:
         example: password123
         minLength: 6
+        type: string
+      role:
+        example: Admin
         type: string
       username:
         example: johndoe
         type: string
     required:
-    - nama
     - password
     - username
     type: object
@@ -123,29 +125,6 @@ definitions:
       success:
         example: true
         type: boolean
-    type: object
-  handlers.marketingRequest:
-    properties:
-      alamat:
-        example: Jl. Contoh No. 1, Sampit
-        type: string
-      email:
-        example: budi@email.com
-        type: string
-      nama:
-        example: Budi Santoso
-        type: string
-      no_telp:
-        example: "08123456789"
-        type: string
-      persentase_komisi:
-        example: 2.5
-        type: number
-      status:
-        example: 1
-        type: integer
-    required:
-    - nama
     type: object
   handlers.resetRequest:
     properties:
@@ -227,14 +206,23 @@ definitions:
     type: object
   handlers.updateUserRequest:
     properties:
+      email:
+        example: john@example.com
+        type: string
       is_admin:
         example: 0
         type: integer
       nama:
         example: John Doe
         type: string
+      nama_lengkap:
+        example: John Doe
+        type: string
       password:
         example: newpassword
+        type: string
+      role:
+        example: Admin
         type: string
       status:
         enum:
@@ -360,7 +348,7 @@ info:
     name: MIT
   termsOfService: http://swagger.io/terms/
   title: Kavling Mentaya API
-  version: "1.0"
+  version: "2.0"
 paths:
   /activity-log:
     get:
@@ -1530,15 +1518,42 @@ paths:
       - Marketing
     post:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Menambahkan data marketing (sales) baru
       parameters:
-      - description: Data marketing
-        in: body
-        name: body
+      - description: Nama marketing
+        in: formData
+        name: nama
         required: true
-        schema:
-          $ref: '#/definitions/handlers.marketingRequest'
+        type: string
+      - description: No. telepon
+        in: formData
+        name: no_telp
+        type: string
+      - description: Alamat
+        in: formData
+        name: alamat
+        type: string
+      - description: Jenis kelamin (L/P)
+        in: formData
+        name: jenis_kelamin
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        type: string
+      - description: Persentase komisi
+        in: formData
+        name: persentase_komisi
+        type: number
+      - description: Status (1=Aktif)
+        in: formData
+        name: status
+        type: integer
+      - description: Foto marketing (opsional)
+        in: formData
+        name: foto
+        type: file
       produces:
       - application/json
       responses:
@@ -1611,7 +1626,7 @@ paths:
       - Marketing
     put:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Mengubah data marketing berdasarkan ID
       parameters:
       - description: Marketing ID
@@ -1619,12 +1634,38 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Data update marketing
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.marketingRequest'
+      - description: Nama marketing
+        in: formData
+        name: nama
+        type: string
+      - description: No. telepon
+        in: formData
+        name: no_telp
+        type: string
+      - description: Alamat
+        in: formData
+        name: alamat
+        type: string
+      - description: Jenis kelamin (L/P)
+        in: formData
+        name: jenis_kelamin
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        type: string
+      - description: Persentase komisi
+        in: formData
+        name: persentase_komisi
+        type: number
+      - description: Status (1=Aktif)
+        in: formData
+        name: status
+        type: integer
+      - description: Foto marketing baru (opsional)
+        in: formData
+        name: foto
+        type: file
       produces:
       - application/json
       responses:

@@ -1847,7 +1847,7 @@ const docTemplate = `{
                 ],
                 "description": "Menambahkan data marketing (sales) baru",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -1858,13 +1858,53 @@ const docTemplate = `{
                 "summary": "Tambah marketing",
                 "parameters": [
                     {
-                        "description": "Data marketing",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.marketingRequest"
-                        }
+                        "type": "string",
+                        "description": "Nama marketing",
+                        "name": "nama",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "No. telepon",
+                        "name": "no_telp",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alamat",
+                        "name": "alamat",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Jenis kelamin (L/P)",
+                        "name": "jenis_kelamin",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Persentase komisi",
+                        "name": "persentase_komisi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Status (1=Aktif)",
+                        "name": "status",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Foto marketing (opsional)",
+                        "name": "foto",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -1930,7 +1970,7 @@ const docTemplate = `{
                 ],
                 "description": "Mengubah data marketing berdasarkan ID",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -1948,13 +1988,52 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Data update marketing",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.marketingRequest"
-                        }
+                        "type": "string",
+                        "description": "Nama marketing",
+                        "name": "nama",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "No. telepon",
+                        "name": "no_telp",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alamat",
+                        "name": "alamat",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Jenis kelamin (L/P)",
+                        "name": "jenis_kelamin",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Persentase komisi",
+                        "name": "persentase_komisi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Status (1=Aktif)",
+                        "name": "status",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Foto marketing baru (opsional)",
+                        "name": "foto",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -2679,26 +2758,20 @@ const docTemplate = `{
         "handlers.bankRequest": {
             "type": "object",
             "required": [
-                "nama_bank",
-                "nama_rekening",
-                "no_rekening"
+                "nama_bank"
             ],
             "properties": {
+                "atas_nama": {
+                    "type": "string"
+                },
                 "is_kas": {
-                    "type": "integer",
-                    "example": 0
+                    "type": "integer"
                 },
                 "nama_bank": {
-                    "type": "string",
-                    "example": "BRI"
-                },
-                "nama_rekening": {
-                    "type": "string",
-                    "example": "PT Kavling Mentaya"
+                    "type": "string"
                 },
                 "no_rekening": {
-                    "type": "string",
-                    "example": "1234567890"
+                    "type": "string"
                 }
             }
         },
@@ -2722,11 +2795,14 @@ const docTemplate = `{
         "handlers.createUserRequest": {
             "type": "object",
             "required": [
-                "nama",
                 "password",
                 "username"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                },
                 "is_admin": {
                     "type": "integer",
                     "example": 0
@@ -2735,10 +2811,18 @@ const docTemplate = `{
                     "type": "string",
                     "example": "John Doe"
                 },
+                "nama_lengkap": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
                 "password": {
                     "type": "string",
                     "minLength": 6,
                     "example": "password123"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "Admin"
                 },
                 "username": {
                     "type": "string",
@@ -2807,38 +2891,6 @@ const docTemplate = `{
                 "success": {
                     "type": "boolean",
                     "example": true
-                }
-            }
-        },
-        "handlers.marketingRequest": {
-            "type": "object",
-            "required": [
-                "nama"
-            ],
-            "properties": {
-                "alamat": {
-                    "type": "string",
-                    "example": "Jl. Contoh No. 1, Sampit"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "budi@email.com"
-                },
-                "nama": {
-                    "type": "string",
-                    "example": "Budi Santoso"
-                },
-                "no_telp": {
-                    "type": "string",
-                    "example": "08123456789"
-                },
-                "persentase_komisi": {
-                    "type": "number",
-                    "example": 2.5
-                },
-                "status": {
-                    "type": "integer",
-                    "example": 1
                 }
             }
         },
@@ -2953,6 +3005,10 @@ const docTemplate = `{
         "handlers.updateUserRequest": {
             "type": "object",
             "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                },
                 "is_admin": {
                     "type": "integer",
                     "example": 0
@@ -2961,9 +3017,17 @@ const docTemplate = `{
                     "type": "string",
                     "example": "John Doe"
                 },
+                "nama_lengkap": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
                 "password": {
                     "type": "string",
                     "example": "newpassword"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "Admin"
                 },
                 "status": {
                     "type": "string",
@@ -3142,7 +3206,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "2.0",
 	Host:             "localhost:8080",
 	BasePath:         "/api",
 	Schemes:          []string{},

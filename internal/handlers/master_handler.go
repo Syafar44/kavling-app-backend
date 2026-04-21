@@ -75,10 +75,17 @@ func (h *MarketingHandler) Detail(c *gin.Context) {
 //	@Summary		Tambah marketing
 //	@Description	Menambahkan data marketing (sales) baru
 //	@Tags			Marketing
-//	@Accept			json
+//	@Accept			multipart/form-data
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			body	body		marketingRequest	true	"Data marketing"
+//	@Param			nama				formData	string	true	"Nama marketing"
+//	@Param			no_telp				formData	string	false	"No. telepon"
+//	@Param			alamat				formData	string	false	"Alamat"
+//	@Param			jenis_kelamin		formData	string	false	"Jenis kelamin (L/P)"
+//	@Param			email				formData	string	false	"Email"
+//	@Param			persentase_komisi	formData	number	false	"Persentase komisi"
+//	@Param			status				formData	int		false	"Status (1=Aktif)"
+//	@Param			foto				formData	file	false	"Foto marketing (opsional)"
 //	@Success		201		{object} object
 //	@Failure		400		{object} object
 //	@Router			/marketing [post]
@@ -134,11 +141,18 @@ func (h *MarketingHandler) Create(c *gin.Context) {
 //	@Summary		Update marketing
 //	@Description	Mengubah data marketing berdasarkan ID
 //	@Tags			Marketing
-//	@Accept			json
+//	@Accept			multipart/form-data
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		int					true	"Marketing ID"
-//	@Param			body	body		marketingRequest	true	"Data update marketing"
+//	@Param			id					path		int		true	"Marketing ID"
+//	@Param			nama				formData	string	false	"Nama marketing"
+//	@Param			no_telp				formData	string	false	"No. telepon"
+//	@Param			alamat				formData	string	false	"Alamat"
+//	@Param			jenis_kelamin		formData	string	false	"Jenis kelamin (L/P)"
+//	@Param			email				formData	string	false	"Email"
+//	@Param			persentase_komisi	formData	number	false	"Persentase komisi"
+//	@Param			status				formData	int		false	"Status (1=Aktif)"
+//	@Param			foto				formData	file	false	"Foto marketing baru (opsional)"
 //	@Success		200		{object} object
 //	@Failure		404		{object} object
 //	@Router			/marketing/{id} [put]
