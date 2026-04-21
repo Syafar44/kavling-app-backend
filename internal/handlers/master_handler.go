@@ -70,15 +70,6 @@ func (h *MarketingHandler) Detail(c *gin.Context) {
 	helpers.OK(c, "OK", m)
 }
 
-type marketingRequest struct {
-	Nama             string  `json:"nama" binding:"required" example:"Budi Santoso"`
-	NoTelp           string  `json:"no_telp" example:"08123456789"`
-	Alamat           string  `json:"alamat" example:"Jl. Contoh No. 1, Sampit"`
-	Email            string  `json:"email" example:"budi@email.com"`
-	PersentaseKomisi float64 `json:"persentase_komisi" example:"2.5"`
-	Status           int     `json:"status" example:"1"`
-}
-
 // Create godoc
 //
 //	@Summary		Tambah marketing
@@ -92,24 +83,42 @@ type marketingRequest struct {
 //	@Failure		400		{object} object
 //	@Router			/marketing [post]
 func (h *MarketingHandler) Create(c *gin.Context) {
-	var req marketingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		helpers.BadRequest(c, "Data tidak lengkap", err.Error())
+	nama := c.PostForm("nama")
+	if nama == "" {
+		helpers.BadRequest(c, "Nama marketing wajib diisi", nil)
 		return
 	}
 
-	status := req.Status
-	if status == 0 {
-		status = 1
+	status := 1
+	if v := c.PostForm("status"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			status = n
+		}
+	}
+
+	komisi := 0.0
+	if v := c.PostForm("persentase_komisi"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			komisi = f
+		}
 	}
 
 	m := &models.Marketing{
-		Nama:             req.Nama,
-		NoTelp:           req.NoTelp,
-		Alamat:           req.Alamat,
-		Email:            req.Email,
-		PersentaseKomisi: req.PersentaseKomisi,
+		Nama:             nama,
+		NoTelp:           c.PostForm("no_telp"),
+		Alamat:           c.PostForm("alamat"),
+		JenisKelamin:     c.PostForm("jenis_kelamin"),
+		Email:            c.PostForm("email"),
+		PersentaseKomisi: komisi,
 		Status:           status,
+	}
+
+	uploadDir := filepath.Join(config.AppConfig.UploadPath, "marketing")
+	if file, err := c.FormFile("foto"); err == nil {
+		filename := strconv.FormatInt(time.Now().UnixNano(), 10) + "_foto" + filepath.Ext(file.Filename)
+		if err := c.SaveUploadedFile(file, filepath.Join(uploadDir, filename)); err == nil {
+			m.Foto = filename
+		}
 	}
 
 	if err := h.repo.Create(m); err != nil {
@@ -141,20 +150,40 @@ func (h *MarketingHandler) Update(c *gin.Context) {
 		return
 	}
 
-	var req marketingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		helpers.BadRequest(c, "Data tidak valid", err.Error())
-		return
+	if v := c.PostForm("nama"); v != "" {
+		m.Nama = v
+	}
+	if v := c.PostForm("no_telp"); v != "" {
+		m.NoTelp = v
+	}
+	if v := c.PostForm("alamat"); v != "" {
+		m.Alamat = v
+	}
+	if v := c.PostForm("jenis_kelamin"); v != "" {
+		m.JenisKelamin = v
+	}
+	if v := c.PostForm("email"); v != "" {
+		m.Email = v
+	}
+	if v := c.PostForm("persentase_komisi"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			m.PersentaseKomisi = f
+		}
+	}
+	if v := c.PostForm("status"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			m.Status = n
+		}
 	}
 
-	m.Nama = req.Nama
-	m.NoTelp = req.NoTelp
-	m.Alamat = req.Alamat
-	m.Email = req.Email
-	m.PersentaseKomisi = req.PersentaseKomisi
-	if req.Status > 0 {
-		m.Status = req.Status
+	uploadDir := filepath.Join(config.AppConfig.UploadPath, "marketing")
+	if file, err := c.FormFile("foto"); err == nil {
+		filename := strconv.FormatInt(time.Now().UnixNano(), 10) + "_foto" + filepath.Ext(file.Filename)
+		if err := c.SaveUploadedFile(file, filepath.Join(uploadDir, filename)); err == nil {
+			m.Foto = filename
+		}
 	}
+
 	m.UpdatedAt = time.Now()
 
 	if err := h.repo.Update(m); err != nil {
@@ -424,10 +453,10 @@ func (h *BankHandler) List(c *gin.Context) {
 }
 
 type bankRequest struct {
-	NamaBank     string `json:"nama_bank" binding:"required" example:"BRI"`
-	NamaRekening string `json:"nama_rekening" binding:"required" example:"PT Kavling Mentaya"`
-	NoRekening   string `json:"no_rekening" binding:"required" example:"1234567890"`
-	IsKas        int    `json:"is_kas" example:"0"`
+	NamaBank   string `json:"nama_bank" binding:"required"`
+	AtasNama   string `json:"atas_nama"`
+	NoRekening string `json:"no_rekening"`
+	IsKas      int    `json:"is_kas"`
 }
 
 // Create godoc
@@ -451,7 +480,7 @@ func (h *BankHandler) Create(c *gin.Context) {
 
 	b := &models.Bank{
 		NamaBank:     req.NamaBank,
-		NamaRekening: req.NamaRekening,
+		NamaRekening: req.AtasNama,
 		NoRekening:   req.NoRekening,
 		IsKas:        req.IsKas,
 		Status:       1,
@@ -493,7 +522,7 @@ func (h *BankHandler) Update(c *gin.Context) {
 	}
 
 	b.NamaBank = req.NamaBank
-	b.NamaRekening = req.NamaRekening
+	b.NamaRekening = req.AtasNama
 	b.NoRekening = req.NoRekening
 	b.IsKas = req.IsKas
 	b.UpdatedAt = time.Now()

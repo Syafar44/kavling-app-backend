@@ -62,10 +62,13 @@ func (h *UserHandler) Detail(c *gin.Context) {
 }
 
 type createUserRequest struct {
-	Username string `json:"username" binding:"required" example:"johndoe"`
-	Password string `json:"password" binding:"required,min=6" example:"password123"`
-	Nama     string `json:"nama" binding:"required" example:"John Doe"`
-	IsAdmin  int    `json:"is_admin" example:"0"`
+	Username    string `json:"username" binding:"required" example:"johndoe"`
+	Password    string `json:"password" binding:"required,min=6" example:"password123"`
+	Nama        string `json:"nama" example:"John Doe"`
+	NamaLengkap string `json:"nama_lengkap" example:"John Doe"`
+	Email       string `json:"email" example:"john@example.com"`
+	Role        string `json:"role" example:"Admin"`
+	IsAdmin     int    `json:"is_admin" example:"0"`
 }
 
 // Create godoc
@@ -98,12 +101,19 @@ func (h *UserHandler) Create(c *gin.Context) {
 		return
 	}
 
+	nama := req.NamaLengkap
+	if nama == "" {
+		nama = req.Nama
+	}
 	user := &models.User{
-		Username: req.Username,
-		Password: hashed,
-		Nama:     req.Nama,
-		IsAdmin:  req.IsAdmin,
-		Status:   "AKTIF",
+		Username:    req.Username,
+		Password:    hashed,
+		Nama:        nama,
+		NamaLengkap: nama,
+		Email:       req.Email,
+		Role:        req.Role,
+		IsAdmin:     req.IsAdmin,
+		Status:      "AKTIF",
 	}
 
 	if err := h.userRepo.Create(user); err != nil {
@@ -115,10 +125,13 @@ func (h *UserHandler) Create(c *gin.Context) {
 }
 
 type updateUserRequest struct {
-	Nama     string `json:"nama" example:"John Doe"`
-	Password string `json:"password" example:"newpassword"`
-	IsAdmin  *int   `json:"is_admin" example:"0"`
-	Status   string `json:"status" example:"AKTIF" enums:"AKTIF,BLOKIR"`
+	Nama        string `json:"nama" example:"John Doe"`
+	NamaLengkap string `json:"nama_lengkap" example:"John Doe"`
+	Email       string `json:"email" example:"john@example.com"`
+	Role        string `json:"role" example:"Admin"`
+	Password    string `json:"password" example:"newpassword"`
+	IsAdmin     *int   `json:"is_admin" example:"0"`
+	Status      string `json:"status" example:"AKTIF" enums:"AKTIF,BLOKIR"`
 }
 
 // Update godoc
@@ -148,8 +161,18 @@ func (h *UserHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if req.Nama != "" {
+	if req.NamaLengkap != "" {
+		user.NamaLengkap = req.NamaLengkap
+		user.Nama = req.NamaLengkap
+	} else if req.Nama != "" {
 		user.Nama = req.Nama
+		user.NamaLengkap = req.Nama
+	}
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+	if req.Role != "" {
+		user.Role = req.Role
 	}
 	if req.Password != "" {
 		hashed, err := h.authService.HashPassword(req.Password)

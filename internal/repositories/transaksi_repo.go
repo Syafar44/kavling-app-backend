@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"fmt"
+	"log"
+	"strings"
 	"time"
 
 	"backend-kavling/internal/models"
@@ -383,3 +386,235 @@ func (r *ArusKasRepository) CreateEntry(entry *ArusKasEntry) error {
 
 // Placeholder for time usage in repo
 var _ = time.Now
+
+// DebugCounts returns counts for diagnostic purposes.
+func (r *TransaksiKavlingRepository) DebugCounts() map[string]interface{} {
+	out := map[string]interface{}{}
+	var n int64
+
+	r.db.Table("customer").Count(&n)
+	out["customer_total"] = n
+
+	r.db.Table("customer_kavling").Count(&n)
+	out["customer_kavling_total"] = n
+
+	r.db.Table("transaksi_kavling").Count(&n)
+	out["transaksi_kavling_total"] = n
+
+	r.db.Table("tagihan").Count(&n)
+	out["tagihan_total"] = n
+
+	r.db.Table("kategori_transaksi").Count(&n)
+	out["kategori_transaksi_total"] = n
+
+	// customer_kavling tanpa transaksi_kavling
+	r.db.Raw(`
+		SELECT COUNT(*) FROM customer_kavling ck
+		LEFT JOIN transaksi_kavling tk
+			ON tk.id_kavling = ck.id_kavling AND tk.id_customer = ck.id_customer
+		WHERE tk.id IS NULL
+	`).Scan(&n)
+	out["customer_kavling_tanpa_transaksi"] = n
+
+	// Sample customer_kavling rows
+	var ck []map[string]interface{}
+	r.db.Raw(`SELECT * FROM customer_kavling LIMIT 10`).Scan(&ck)
+	out["sample_customer_kavling"] = ck
+
+	// Sample transaksi_kavling rows
+	var tk []map[string]interface{}
+	r.db.Raw(`SELECT id, no_transaksi, id_kavling, id_customer, jenis_pembelian FROM transaksi_kavling LIMIT 10`).Scan(&tk)
+	out["sample_transaksi_kavling"] = tk
+
+	// Semua customer — lihat jenis_pembelian & field pembayaran apa adanya
+	var allCust []map[string]interface{}
+	r.db.Raw(`SELECT id, kode_customer, nama, jenis_pembelian, harga_jual, jumlah_pembayaran
+	          FROM customer LIMIT 10`).Scan(&allCust)
+	out["sample_customer_all"] = allCust
+
+	// Pembayaran total
+	r.db.Table("pembayaran").Count(&n)
+	out["pembayaran_total"] = n
+
+	// Diagnostik: BF candidates yang HARUSNYA dibuatkan pembayaran
+	var bfCand []map[string]interface{}
+	r.db.Raw(`
+		SELECT tk.id AS id_transaksi, c.id AS id_customer,
+		       c.jenis_pembelian, c.jumlah_pembayaran,
+		       (SELECT COUNT(*) FROM pembayaran p WHERE p.id_transaksi = tk.id) AS n_pembayaran
+		FROM transaksi_kavling tk
+		JOIN customer c ON c.id = tk.id_customer
+	`).Scan(&bfCand)
+	out["bf_candidates"] = bfCand
+
+	// Cek kategori 001 (Booking Fee)
+	var kat map[string]interface{}
+	r.db.Raw(`SELECT id, kode, kategori, jenis FROM kategori_transaksi WHERE kode = '001' LIMIT 1`).Scan(&kat)
+	out["kategori_bf"] = kat
+
+	return out
+}
+
+// NOTE: BackfillFromCustomers, FixTagihanBF, dan BackfillBFPembayaran telah DIHAPUS.
+// Semua logika pembuatan TransaksiKavling + Tagihan + Pembayaran BF
+// sekarang dilakukan langsung di customer_handler_v2.go → generatePembayaran()
+// saat customer disimpan. Tidak ada lagi "self-heal" di endpoint GET.
+
+// resolveHargaKavling loads the kavling's harga_jual_cash via transaksi_kavling.
+// Ini SUMBER KEBENARAN untuk harga unit — jangan pakai customer.HargaJual.
+func resolveHargaKavling(db *gorm.DB, idTransaksi int) float64 {
+	var trx models.TransaksiKavling
+	if err := db.Select("id_kavling, harga_jual").First(&trx, idTransaksi).Error; err != nil {
+		return 0
+	}
+	var kav models.Kavling
+	if err := db.Select("harga_jual_cash").First(&kav, trx.IDKavling).Error; err != nil {
+		return trx.HargaJual
+	}
+	if kav.HargaJualCash > 0 {
+		return kav.HargaJualCash
+	}
+	return trx.HargaJual
+}
+
+func resolveKavlingLabel(db *gorm.DB, idTransaksi int) string {
+	var trx models.TransaksiKavling
+	if err := db.Select("id_kavling").First(&trx, idTransaksi).Error; err != nil {
+		return ""
+	}
+	var kav models.Kavling
+	if err := db.Preload("Lokasi").First(&kav, trx.IDKavling).Error; err != nil {
+		return ""
+	}
+	lokasiNama := ""
+	if kav.Lokasi != nil {
+		lokasiNama = kav.Lokasi.Nama
+	}
+	return fmt.Sprintf("Harga Tanah Kavling di %s Blok %s", lokasiNama, kav.KodeKavling)
+}
+
+func CreateTagihanForCustomer(idTransaksi int, customer *models.Customer, tagihanRepo *TagihanRepository) {
+	db := tagihanRepo.db
+
+	// Guard: jika sudah ada tagihan untuk transaksi ini, skip — mencegah duplikasi
+	var existingCount int64
+	db.Model(&models.Tagihan{}).Where("id_transaksi = ?", idTransaksi).Count(&existingCount)
+	if existingCount > 0 {
+		log.Printf("[CreateTagihan] SKIP trx %d — sudah punya %d tagihan", idTransaksi, existingCount)
+		return
+	}
+
+	ensureKategori := func(kode, kategori string) int {
+		id := tagihanRepo.FindKategoriByKode(kode)
+		if id > 0 {
+			return id
+		}
+		k := &models.KategoriTransaksi{Kode: kode, Kategori: kategori, Jenis: "PEMASUKAN", IsSystem: true}
+		if err := db.Create(k).Error; err != nil {
+			log.Printf("[CreateTagihan] gagal auto-seed kategori %s: %v", kode, err)
+			return 0
+		}
+		log.Printf("[CreateTagihan] auto-seeded kategori %s (%s) id=%d", kode, kategori, k.ID)
+		return k.ID
+	}
+
+	// Harga kavling (sumber kebenaran untuk tagihan)
+	hargaKavling := resolveHargaKavling(db, idTransaksi)
+	kavlingLabel := resolveKavlingLabel(db, idTransaksi)
+	if kavlingLabel == "" {
+		kavlingLabel = "Harga Unit Kavling"
+	}
+
+	switch strings.ToUpper(strings.TrimSpace(customer.JenisPembelian)) {
+	case "BOOKING FEE":
+		// Tagihan = harga unit kavling (bukan BF!)
+		idKat := ensureKategori("001", "Booking Fee")
+		if hargaKavling <= 0 {
+			log.Printf("[CreateTagihan] WARNING harga kavling 0 untuk trx %d — skip tagihan BF", idTransaksi)
+			return
+		}
+		tagihan := &models.Tagihan{IDTransaksi: idTransaksi, IDKategori: idKat, Deskripsi: kavlingLabel, Nominal: hargaKavling}
+		if err := db.Create(tagihan).Error; err != nil {
+			log.Printf("[CreateTagihan] ERROR booking fee tagihan: %v", err)
+			return
+		}
+		// Catat BF yang sudah dibayar sebagai pemasukan pertama
+		if customer.JumlahPembayaran > 0 {
+			var trxRec models.TransaksiKavling
+			db.Select("id_kavling").First(&trxRec, idTransaksi)
+
+			var nextKe int64
+			db.Model(&models.Pembayaran{}).Where("id_transaksi = ?", idTransaksi).Count(&nextKe)
+			noPay := fmt.Sprintf("PAY-%s-%d-%d", time.Now().Format("20060102"), idTransaksi, nextKe+1)
+			pay := &models.Pembayaran{
+				NoPembayaran: noPay,
+				IDTransaksi:  idTransaksi,
+				IDCustomer:   customer.ID,
+				IDKavling:    trxRec.IDKavling,
+				IDKategori:   &idKat,
+				CaraBayar:    "TUNAI",
+				Tanggal:      time.Now(),
+				PembayaranKe: int(nextKe) + 1,
+				JumlahBayar:  customer.JumlahPembayaran,
+				Keterangan:   fmt.Sprintf("Booking Fee %s", kavlingLabel),
+			}
+			if err := db.Create(pay).Error; err != nil {
+				log.Printf("[CreateTagihan] ERROR booking fee pemasukan: %v", err)
+			}
+		}
+	case "CASH KERAS":
+		idKat := ensureKategori("004", "Pembelian Cash")
+		harga := hargaKavling
+		if harga <= 0 {
+			harga = customer.HargaJual
+		}
+		if err := db.Create(&models.Tagihan{IDTransaksi: idTransaksi, IDKategori: idKat, Deskripsi: kavlingLabel, Nominal: harga}).Error; err != nil {
+			log.Printf("[CreateTagihan] ERROR cash: %v", err)
+		}
+	case "KREDIT":
+		idKat := ensureKategori("002", "Cicilan")
+		harga := hargaKavling
+		if harga <= 0 {
+			harga = customer.HargaJual
+		}
+		
+		// Buat 1 Tagihan utama seharga kavling (bukan per bulan)
+		tagihan := &models.Tagihan{
+			IDTransaksi: idTransaksi,
+			IDKategori:  idKat,
+			Deskripsi:   kavlingLabel,
+			Nominal:     harga,
+		}
+		if err := db.Create(tagihan).Error; err != nil {
+			log.Printf("[CreateTagihan] ERROR kredit tagihan: %v", err)
+		}
+
+		// Jika ada DP (JumlahPembayaran > 0), catat sebagai Pembayaran pertama
+		if customer.JumlahPembayaran > 0 {
+			var trxRec models.TransaksiKavling
+			db.Select("id_kavling").First(&trxRec, idTransaksi)
+
+			var nextKe int64
+			db.Model(&models.Pembayaran{}).Where("id_transaksi = ?", idTransaksi).Count(&nextKe)
+			noPay := fmt.Sprintf("PAY-%s-%d-%d", time.Now().Format("20060102"), idTransaksi, nextKe+1)
+			
+			pay := &models.Pembayaran{
+				NoPembayaran: noPay,
+				IDTransaksi:  idTransaksi,
+				IDCustomer:   customer.ID,
+				IDKavling:    trxRec.IDKavling,
+				IDKategori:   &idKat,
+				CaraBayar:    "TUNAI",
+				Tanggal:      time.Now(),
+				PembayaranKe: int(nextKe) + 1,
+				JumlahBayar:  customer.JumlahPembayaran,
+				Keterangan:   fmt.Sprintf("DP Kredit %s", kavlingLabel),
+			}
+			if err := db.Create(pay).Error; err != nil {
+				log.Printf("[CreateTagihan] ERROR kredit pemasukan DP: %v", err)
+			}
+		}
+	default:
+		log.Printf("[CreateTagihan] WARNING jenis_pembelian %q tidak dikenal", customer.JenisPembelian)
+	}
+}
